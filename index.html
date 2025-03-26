@@ -125,6 +125,10 @@
             color: var(--tg-theme-text-color, #000000);
         }
 
+        .error {
+            color: #ff3b30;
+        }
+
         @media (max-width: 600px) {
             h1 {
                 font-size: 1.5rem;
@@ -153,7 +157,7 @@
         </div>
         <div class="file-info" id="file-info"></div>
         <button id="upload-button" onclick="uploadFile()" disabled>Загрузить</button>
-        <div class="status" id="status">Выберите файл для загрузки</div>
+        <div class="status" id="status">Выберите файл для загрузки (макс. 100 МБ)</div>
         <div id="result"></div>
     </div>
 
@@ -198,13 +202,25 @@
         function handleFileSelection() {
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
+                const maxSize = 100 * 1024 * 1024;
+                
+                if (file.size > maxSize) {
+                    fileInfoElement.innerHTML = `<span class="error">Файл слишком большой (${formatFileSize(file.size)})</span>`;
+                    uploadButton.disabled = true;
+                    statusElement.innerHTML = '<span class="error">Максимальный размер файла: 100 МБ</span>';
+                    return;
+                }
+                
                 fileInfoElement.textContent = `Выбран файл: ${file.name} (${formatFileSize(file.size)})`;
+                fileInfoElement.className = 'file-info';
                 uploadButton.disabled = false;
                 statusElement.textContent = 'Нажмите "Загрузить" для отправки файла';
+                statusElement.className = 'status';
             } else {
                 fileInfoElement.textContent = '';
                 uploadButton.disabled = true;
-                statusElement.textContent = 'Выберите файл для загрузки';
+                statusElement.textContent = 'Выберите файл для загрузки (макс. 100 МБ)';
+                statusElement.className = 'status';
             }
         }
 
@@ -251,7 +267,7 @@
                 }
             } catch (error) {
                 console.error('Ошибка загрузки:', error);
-                statusElement.textContent = 'Ошибка: ' + error.message;
+                statusElement.innerHTML = '<span class="error">Ошибка: ' + error.message + '</span>';
                 if (tg.showAlert) {
                     tg.showAlert('Ошибка загрузки файла: ' + error.message);
                 }
